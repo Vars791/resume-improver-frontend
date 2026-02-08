@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-// ✅ CORRECT env var (must match Netlify)
+// ✅ Correct env var (Netlify)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 if (!API_BASE_URL) {
@@ -21,6 +21,13 @@ export default function Home() {
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
 
+  // ================= BACKEND WARM-UP (FIXES COLD START) =================
+  useEffect(() => {
+    if (API_BASE_URL) {
+      fetch(API_BASE_URL).catch(() => {});
+    }
+  }, []);
+
   // ================= SAFE PARALLAX =================
   useEffect(() => {
     const move = (e: MouseEvent) => {
@@ -37,7 +44,7 @@ export default function Home() {
     return () => window.removeEventListener("mousemove", move);
   }, []);
 
-  // ================= SAFE FETCH =================
+  // ================= SAFE FETCH (WITH TIMEOUT) =================
   async function handleSubmit() {
     if (!resume || !jobDesc) return;
 
@@ -54,10 +61,16 @@ export default function Home() {
       formData.append("resume", resume);
       formData.append("job_description", jobDesc);
 
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000); // 60s
+
       const res = await fetch(`${API_BASE_URL}/analyze-resume`, {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       });
+
+      clearTimeout(timeout);
 
       if (!res.ok) {
         throw new Error(`Backend error: ${res.status}`);
@@ -67,7 +80,7 @@ export default function Home() {
       setResult(data);
     } catch (err) {
       console.error(err);
-      alert("⚠️ Backend unreachable or cold start (wait ~30s)");
+      alert("⚠️ Backend is waking up. Please wait ~30s and try again.");
     } finally {
       setLoading(false);
     }
