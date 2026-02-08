@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+// ✅ CORRECT env var (must match Netlify)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
-if (!BACKEND_URL) {
+if (!API_BASE_URL) {
   console.error(
-    "❌ NEXT_PUBLIC_BACKEND_URL is NOT set. Add it in your deployment environment variables."
+    "❌ NEXT_PUBLIC_API_BASE_URL is NOT set. Add it in Netlify Environment Variables."
   );
 }
 
@@ -39,8 +40,9 @@ export default function Home() {
   // ================= SAFE FETCH =================
   async function handleSubmit() {
     if (!resume || !jobDesc) return;
-    if (!BACKEND_URL) {
-      alert("Backend URL not configured");
+
+    if (!API_BASE_URL) {
+      alert("❌ Backend URL not configured");
       return;
     }
 
@@ -52,7 +54,7 @@ export default function Home() {
       formData.append("resume", resume);
       formData.append("job_description", jobDesc);
 
-      const res = await fetch(`${BACKEND_URL}/analyze-resume`, {
+      const res = await fetch(`${API_BASE_URL}/analyze-resume`, {
         method: "POST",
         body: formData,
       });
@@ -81,15 +83,13 @@ export default function Home() {
     <main className="min-h-screen cosmic-bg flex items-center justify-center px-6 text-white overflow-hidden">
       <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-16 w-full max-w-6xl">
 
-        {/* ================= LEFT CARD ================= */}
+        {/* LEFT */}
         <motion.div
           ref={leftRef}
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
-          className="rounded-3xl p-8 space-y-6
-                     bg-gradient-to-br from-white/10 to-white/5
-                     backdrop-blur-2xl border border-white/10 neon-border"
+          className="rounded-3xl p-8 space-y-6 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-2xl border border-white/10 neon-border"
         >
           <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
             AI Resume Improver <span className="text-white">Pro</span>
@@ -100,14 +100,12 @@ export default function Home() {
             accept=".pdf,.docx"
             disabled={loading}
             onChange={(e) => setResume(e.target.files?.[0] || null)}
-            className="w-full text-sm file:bg-indigo-600 file:text-white
-                       file:rounded-lg file:px-4 file:py-2 file:border-0"
+            className="w-full text-sm file:bg-indigo-600 file:text-white file:rounded-lg file:px-4 file:py-2 file:border-0"
           />
 
           <textarea
             disabled={loading}
-            className="w-full h-36 rounded-xl bg-black/40
-                       border border-white/10 p-4 text-sm resize-none"
+            className="w-full h-36 rounded-xl bg-black/40 border border-white/10 p-4 text-sm resize-none"
             value={jobDesc}
             onChange={(e) => setJobDesc(e.target.value)}
             placeholder="Paste job description here"
@@ -116,35 +114,21 @@ export default function Home() {
           <motion.button
             disabled={loading}
             whileHover={!loading ? { scale: 1.05 } : {}}
-            animate={
-              loading
-                ? {}
-                : {
-                    boxShadow: [
-                      "0 0 15px #a855f7",
-                      "0 0 30px #ec4899",
-                      "0 0 15px #a855f7",
-                    ],
-                  }
-            }
             transition={{ repeat: Infinity, duration: 3 }}
             onClick={handleSubmit}
-            className="w-full py-3 rounded-xl font-semibold
-                       bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 neon-button"
+            className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 neon-button"
           >
             {loading ? "Analyzing Resume..." : "Improve Resume"}
           </motion.button>
         </motion.div>
 
-        {/* ================= RIGHT CARD ================= */}
+        {/* RIGHT */}
         <motion.div
           ref={rightRef}
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="rounded-3xl p-8 space-y-6
-                     bg-gradient-to-br from-white/10 to-white/5
-                     backdrop-blur-2xl border border-white/10 neon-border"
+          className="rounded-3xl p-8 space-y-6 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-2xl border border-white/10 neon-border"
         >
           <h2 className="text-xl font-semibold text-cyan-300">
             Resume Analysis
@@ -179,9 +163,8 @@ export default function Home() {
 
               {result.download_id && (
                 <a
-                  href={`${BACKEND_URL}/download/${result.download_id}`}
-                  className="block text-center w-full py-3 rounded-xl
-                             bg-emerald-500 font-semibold"
+                  href={`${API_BASE_URL}/download/${result.download_id}`}
+                  className="block text-center w-full py-3 rounded-xl bg-emerald-500 font-semibold"
                 >
                   Download Improved Resume
                 </a>
